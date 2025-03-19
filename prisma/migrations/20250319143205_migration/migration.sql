@@ -16,9 +16,9 @@ CREATE TABLE "User" (
 CREATE TABLE "Profile" (
     "profile_id" SERIAL NOT NULL,
     "user_id" INTEGER NOT NULL,
-    "age" INTEGER NOT NULL,
-    "weight" DOUBLE PRECISION NOT NULL,
-    "height" DOUBLE PRECISION NOT NULL,
+    "age" INTEGER,
+    "weight" DOUBLE PRECISION,
+    "height" DOUBLE PRECISION,
     "fitness_goal" TEXT NOT NULL,
     "goal_detail" TEXT,
 

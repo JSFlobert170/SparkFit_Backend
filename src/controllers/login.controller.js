@@ -28,8 +28,8 @@ exports.login = async (req, res, next) => {
         }
         const token = jwt.sign(
             {
-                id: user._id,
-                admin: user.admin,
+                id: user.user_id,
+                admin: user.user_type.toLowerCase() === "admin"? true : false,
             },
             process.env.JWT_SECRET,
             { expiresIn: "365d" }

@@ -3,17 +3,21 @@ const prisma = new PrismaClient();
 
 exports.getAllUsers = async (req, res, next) => {
   try {
-    const allUsers = await prisma.user.findMany();
+    const allUsers = await prisma.user.findMany({
+      include: {
+        profile: true 
+      }
+    })
     if (!allUsers) {
         return res.json({
           status: 404,
-          message: "User not found",
+          message: "Users not found",
         });
     }
     return res.json({
         status: 200,
         message: "Successfully retrieved all users",
-        data: allUsers,
+        allUsers: allUsers
     });
 } catch (err) {
     return res.json({
@@ -34,6 +38,9 @@ exports.getUser = async (req, res, next) => {
   }
     const user = await prisma.user.findUnique({
       where: { user_id: parseInt(id) },
+      include: {
+        profile: true 
+      }
     });
     if (!user) {
       return res.json({
@@ -58,15 +65,25 @@ exports.getUser = async (req, res, next) => {
 exports.updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { username, email, profile_picture, password, phone } = req.body;
+    const userTokenId = req.userToken.id;
+    const { username, email, profile_picture, password, phone, profile } = req.body;
     let existingUserByPhone = null;
     let existingUserByEmail = null;
     let existingUserName = null;
+console.log(req.body)
+    console.log(req.userToken)
 
-    if (!id || !req.body) {
+    if (!id || !userTokenId || !req.body) {
       return res.json({
         status: 400,
-        message: "Id or body is required",
+        message: "Id is required",
+      });
+    }
+
+    if (id != req.userToken.id || req.userToken.admin != true) {
+      return res.json({
+          code: 401,
+          message: "Unauthorized",
       });
     }
     if (email) {
@@ -84,8 +101,8 @@ exports.updateUser = async (req, res, next) => {
     existingUserName = await prisma.user.findUnique({
       where: { username: username },
     });
-    if (existingUserName) return res.json({status: 409, message: "username already exists"});
-    if (existingUserByEmail || existingUserByPhone) {
+    if (existingUserName && id != req.userToken.id) return res.json({status: 409, message: "username already exists"});
+    if ((existingUserByEmail || existingUserByPhone) && id != req.userToken.id) {
       return res.json({
           status: 409,
           message: (existingUserByEmail ? "email" : "phone number") + " already exists",
@@ -95,7 +112,20 @@ exports.updateUser = async (req, res, next) => {
     
       const updatedUser = await prisma.user.update({
         where: { user_id: parseInt(id) },
-        data: { username, email, profile_picture, password },
+        data: { 
+          username, 
+          email, 
+          profile_picture, 
+          password,
+          profile: {
+            update: {
+              ...profile
+            },
+          },
+         },
+         include: {
+          profile: true
+         }
       });
       if (!updatedUser) {
         return res.json({
@@ -126,8 +156,11 @@ exports.deleteUser = async (req, res, next) => {
       });
     }
     try {
+      const deletedUserProfile = await prisma.profile.delete({
+        where: { user_id: parseInt(id) }
+      });
       const deletedUser = await prisma.user.delete({
-        where: { user_id: parseInt(id) },
+        where: { user_id: parseInt(id) }
       });
       if (!deletedUser) {
         return res.json({
@@ -138,7 +171,8 @@ exports.deleteUser = async (req, res, next) => {
       return res.json({
         status  : 204,
         message : "Successfully deleted user",
-        data : deletedUser
+        deleteUser : deletedUser,
+        deleteUserProfile : deletedUserProfile
       });
   } catch (err) {
       return res.json({
@@ -158,8 +192,12 @@ exports.getMe = async (req, res, next) => {
             message: "Id is required",
           });
       }
+      console.log(id)
       const user = await prisma.user.findUnique({
         where: { user_id: parseInt(id) },
+        include: {
+          profile: true
+        } 
       });
       if (!user) {
           return res.json({

@@ -14,7 +14,7 @@ async function hashPassword(password) {
 }
 
 exports.register = async (req, res, next) => {
-    const { username, email, password, user_type, phone, profile_picture } = req.body;
+    const { username, email, password, user_type, phone, profile_picture, profile } = req.body;
     let existingUserByPhone = null;
     let existingUserByEmail = null;
     let existingUserName = null;
@@ -68,6 +68,9 @@ exports.register = async (req, res, next) => {
               phone: phone || null,
               user_type: user_type || "user",
               profile_picture: profile_picture || null,
+              profile: {
+                create: profile
+              }
             }
           });
         return res.send({
