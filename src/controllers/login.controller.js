@@ -11,7 +11,6 @@ exports.login = async (req, res, next) => {
             message: "Missing email or password",
         });
     }
-    
     try {
         const user = await prisma.user.findUnique({
             where: { email: email },
@@ -40,8 +39,8 @@ exports.login = async (req, res, next) => {
             message: "Login successful",
             token: token,
         });
-    } catch (error) {
+    } catch (err) {
         console.error(error);
-        return res.json({ status: 500, message: error.message});
+        return res.json({ status: err.status, message: err.message});
     }
 };

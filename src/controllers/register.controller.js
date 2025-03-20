@@ -18,20 +18,16 @@ exports.register = async (req, res, next) => {
     let existingUserByPhone = null;
     let existingUserByEmail = null;
     let existingUserName = null;
+    
 
-    if (!username || !password) {
+
+    if (!username || !password || (!email && !phone)) {
         return res.json({
             status: 400,
             message: "Missing required fields",
         });
     }
 
-    if (!email && !phone) {
-        return res.json({
-            status: 400,
-            message: "Missing required fields",
-        });
-    }
 // Ajouter ici d'autres validations selon les besoins, par exemple :
 // - Vérifier le format de l'email
 // - Vérifier la complexité du mot de passe
@@ -69,8 +65,11 @@ exports.register = async (req, res, next) => {
               user_type: user_type || "user",
               profile_picture: profile_picture || null,
               profile: {
-                create: profile
+                create: profile || {}
               }
+            },
+            include:{
+                profile: true
             }
           });
         return res.send({
@@ -79,15 +78,15 @@ exports.register = async (req, res, next) => {
             data: newUser,
         });
         // senderEmail(newUser);
-    } catch (error) {
+    } catch (err) {
         // if (error.code === "P2002") { // Code d'erreur pour la violation de contrainte unique
         //     return res.json({ 
         //       status: 409,
         //       message: "A user with this email already exists." });
         //   }
           return res.json({ 
-            status: 500,
-            message: error.message 
+            status: err.status,
+            message: err.message 
         });
     }
 };

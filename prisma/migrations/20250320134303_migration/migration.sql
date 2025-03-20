@@ -5,9 +5,9 @@ CREATE TABLE "User" (
     "email" TEXT,
     "password" TEXT NOT NULL,
     "phone" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "profile_picture" TEXT,
     "user_type" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("user_id")
 );
@@ -19,7 +19,7 @@ CREATE TABLE "Profile" (
     "age" INTEGER,
     "weight" DOUBLE PRECISION,
     "height" DOUBLE PRECISION,
-    "fitness_goal" TEXT NOT NULL,
+    "fitness_goal" TEXT,
     "goal_detail" TEXT,
 
     CONSTRAINT "Profile_pkey" PRIMARY KEY ("profile_id")

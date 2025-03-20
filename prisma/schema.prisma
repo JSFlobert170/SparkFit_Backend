@@ -18,10 +18,10 @@ model User {
   username        String      @unique
   email           String?     @unique
   password        String
-  phone           String?      @unique
-  created_at      DateTime     @default(now())
+  phone           String?     @unique
   profile_picture String?
   user_type       String
+  created_at      DateTime    @default(now())
   profile         Profile?
   workouts        Workout[]
   mealPlans       Meal_Plan[]

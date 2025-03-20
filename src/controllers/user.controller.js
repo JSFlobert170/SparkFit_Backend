@@ -2,11 +2,19 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 exports.getAllUsers = async (req, res, next) => {
+  if (!req.userToken.admin) {
+    return res.json({
+        code: 401,
+        message: "Admin access required",
+    });
+  }
   try {
     const allUsers = await prisma.user.findMany({
       include: {
-        profile: true 
+        profile: true,
+        workouts: true,
       }
+      
     })
     if (!allUsers) {
         return res.json({
@@ -21,8 +29,8 @@ exports.getAllUsers = async (req, res, next) => {
     });
 } catch (err) {
     return res.json({
-      message: "Bad request",
-      status: 400,
+      status: err.status,
+      message: err.message || "Bad request",
     });
 }
 }
@@ -30,16 +38,24 @@ exports.getAllUsers = async (req, res, next) => {
 exports.getUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    if (!id) {
+    const userTokenId = req.userToken.id;
+    if (!id || !userTokenId) {
       return res.json({
         status: 400,
         message: "Id is required",
       });
+    }
+  if (id != req.userToken.id && req.userToken.admin != true) {
+    return res.json({
+        status: 401,
+        message: "Unauthorized",
+    });
   }
     const user = await prisma.user.findUnique({
       where: { user_id: parseInt(id) },
       include: {
-        profile: true 
+        profile: true,
+        workouts: true,
       }
     });
     if (!user) {
@@ -56,8 +72,8 @@ exports.getUser = async (req, res, next) => {
 
   } catch (err) {
     return res.json({
-      status: 400,
-      message: "bad request",
+      status: err.status,
+      message: err.message || "Bad request",
     });
   }
 };
@@ -66,11 +82,11 @@ exports.updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userTokenId = req.userToken.id;
-    const { username, email, profile_picture, password, phone, profile } = req.body;
+    const { username, email, profile_picture, password, phone, profile, workouts } = req.body;
     let existingUserByPhone = null;
     let existingUserByEmail = null;
     let existingUserName = null;
-console.log(req.body)
+    console.log(req.body)
     console.log(req.userToken)
 
     if (!id || !userTokenId || !req.body) {
@@ -80,9 +96,9 @@ console.log(req.body)
       });
     }
 
-    if (id != req.userToken.id || req.userToken.admin != true) {
+    if (id != req.userToken.id && req.userToken.admin != true) {
       return res.json({
-          code: 401,
+          status: 401,
           message: "Unauthorized",
       });
     }
@@ -109,23 +125,40 @@ console.log(req.body)
           data: existingUserByEmail ? email : phone,
       });
     }
+
+      // Préparer l'objet data pour la mise à jour
+    const updateData = {
+      username,
+      email,
+      profile_picture,
+      password
+    };
+
+    // Ajouter conditionnellement la mise à jour du profil
+    if (profile) {
+      updateData.profile = {
+        update: {
+          ...profile
+        }
+      };
+    }
+
+    // Ajouter conditionnellement la mise à jour des workouts
+    if (workouts) {
+      updateData.workouts = {
+        update: {
+          ...workouts
+        }
+      };
+    }
     
       const updatedUser = await prisma.user.update({
         where: { user_id: parseInt(id) },
-        data: { 
-          username, 
-          email, 
-          profile_picture, 
-          password,
-          profile: {
-            update: {
-              ...profile
-            },
-          },
-         },
-         include: {
-          profile: true
-         }
+        data: updateData,
+        include: {
+          profile: true,
+          workouts: true,
+        }
       });
       if (!updatedUser) {
         return res.json({
@@ -140,22 +173,31 @@ console.log(req.body)
       });
   } catch (err) {
     return res.json({
-      status: 400,
-      message: "Bad request",
+      status: err.status,
+      message: err.message || "Bad request",
     });
   }
 };
   
-
 exports.deleteUser = async (req, res, next) => {
   const { id } = req.params;
-    if (!id) {
+  const userTokenId = req.userToken.id;
+    if (!id || !userTokenId) {
       return res.json({
         status: 400,
         message: "Id is required",
       });
     }
+    if (id != req.userToken.id && req.userToken.admin != true) {
+      return res.json({
+          status: 401,
+          message: "Unauthorized",
+      });
+    }
     try {
+      const deletedUserWorkouts = await prisma.workout.deleteMany({
+        where: { user_id: parseInt(id) }
+      });
       const deletedUserProfile = await prisma.profile.delete({
         where: { user_id: parseInt(id) }
       });
@@ -165,20 +207,20 @@ exports.deleteUser = async (req, res, next) => {
       if (!deletedUser) {
         return res.json({
           status: 404,
-          message: "User is not found",
+          message: "User profile is not found",
         });
     }
       return res.json({
         status  : 204,
         message : "Successfully deleted user",
         deleteUser : deletedUser,
-        deleteUserProfile : deletedUserProfile
+        deleteUserProfile : deletedUserProfile,
+        deleteUserWorkouts : deletedUserWorkouts
       });
   } catch (err) {
       return res.json({
-        status: 400,
-        message: "Bad request",
-          
+        status: err.status,
+        message: err.message || "Bad request",
       });
   }
 };
@@ -196,7 +238,8 @@ exports.getMe = async (req, res, next) => {
       const user = await prisma.user.findUnique({
         where: { user_id: parseInt(id) },
         include: {
-          profile: true
+          profile: true,
+          workouts: true,
         } 
       });
       if (!user) {
@@ -213,8 +256,8 @@ exports.getMe = async (req, res, next) => {
       });
   } catch (err) {
     return res.json({
-      status: 400,
-      message: "Bad request",
+      status: err.status,
+      message: err.message || "Bad request",
     });
   }
 };
