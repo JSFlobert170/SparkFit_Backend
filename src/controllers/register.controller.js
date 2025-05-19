@@ -72,7 +72,7 @@ exports.register = async (req, res, next) => {
                 profile: true
             }
           });
-        return res.json({
+        return res.send({
             message: "User resgistered successfully",
             status: 201,
             data: newUser,
