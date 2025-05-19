@@ -17,4 +17,6 @@ npx prisma migrate reset
 
 ### Interface visuel:
 
-`npx prisma studio`
+```
+npx prisma studio
+```

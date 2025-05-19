@@ -18,10 +18,10 @@ model User {
   username        String      @unique
   email           String?     @unique
   password        String
-  phone           String?      @unique
-  created_at      DateTime     @default(now())
+  phone           String?     @unique
   profile_picture String?
   user_type       String
+  created_at      DateTime    @default(now())
   profile         Profile?
   workouts        Workout[]
   mealPlans       Meal_Plan[]
@@ -30,10 +30,10 @@ model User {
 model Profile {
   profile_id   Int     @id @default(autoincrement())
   user_id      Int     @unique
-  age          Int
-  weight       Float
-  height       Float
-  fitness_goal String
+  age          Int?
+  weight       Float?
+  height       Float?
+  fitness_goal String?
   goal_detail  String?
   user         User    @relation(fields: [user_id], references: [user_id])
 }
