@@ -25,7 +25,7 @@ exports.getAllUsers = async (req, res, next) => {
     return res.json({
         status: 200,
         message: "Successfully retrieved all users",
-        allUsers: allUsers
+        data: allUsers
     });
 } catch (err) {
     return res.json({
