@@ -114,11 +114,10 @@ exports.deleteUserProfile = async (req, res, next) => {
         data : deletedUserProfile
       });
   } catch (err) {
-      return res.json({
-        status: 400,
-        message: "Bad request",
-          
-      });
+    return res.json({
+      status: err.status,
+      message: err.message || "Bad request",
+    });
   }
 };
 

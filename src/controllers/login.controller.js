@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const logger = require('../utils/logger');
 
 exports.login = async (req, res, next) => {
     const { email, password, phone } = req.body;
@@ -40,7 +41,7 @@ exports.login = async (req, res, next) => {
             token: token,
         });
     } catch (err) {
-        console.error(error);
+        logger.error(err);
         return res.json({ status: err.status, message: err.message});
     }
 };

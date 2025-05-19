@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const logger = require('./utils/logger');
 
 // Configuration du pool de connexions PostgreSQL
 const pool = new Pool({
@@ -9,9 +10,9 @@ const pool = new Pool({
 // Test de la connexion dès l'importation
 pool.connect(err => {
   if (err) {
-    console.error('Erreur de connexion à la base de données', err.stack);
+    logger.error('Erreur de connexion à la base de données', err.stack);
   } else {
-    console.log('Connecté à la base de données');
+    logger.info('Connecté à la base de données');
   }
 });
 
